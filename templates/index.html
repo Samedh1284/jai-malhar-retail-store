@@ -1,0 +1,211 @@
+{% extends "base.html" %}
+
+{% block title %}Jai Malhar Retail Store{% endblock %}
+
+{% block content %}
+
+<!-- HERO -->
+
+<section class="hero">
+
+    <div class="container">
+
+        <h1>Jai Malhar Retail Store</h1>
+
+        <p>
+            Your local store for groceries, snacks,
+            beverages and everyday essentials.
+        </p>
+
+        <a href="#products" class="btn">
+            Shop Products
+        </a>
+
+    </div>
+
+</section>
+
+
+<!-- PRODUCTS -->
+
+<section class="products-section" id="products">
+
+    <div class="container">
+
+        <h2>Our Products</h2>
+
+
+        <!-- SEARCH -->
+
+        <div class="product-search">
+
+            <input
+                type="text"
+                id="searchInput"
+                placeholder="🔎 Search products..."
+                autocomplete="off"
+            >
+
+        </div>
+
+
+        <!-- CATEGORIES -->
+
+        <div
+            class="category-buttons"
+            id="categoryButtons"
+        >
+
+            <button
+                type="button"
+                class="category-btn active"
+                data-category="all"
+            >
+                All
+            </button>
+
+            {% for category in categories %}
+
+            <button
+                type="button"
+                class="category-btn"
+                data-category="{{ category|lower }}"
+            >
+                {{ category }}
+            </button>
+
+            {% endfor %}
+
+        </div>
+
+
+        <!-- PRODUCT GRID -->
+
+        <div
+            class="products-grid"
+            id="productGrid"
+        >
+
+            {% for product in products %}
+
+                {% if product.is_available %}
+
+                <div
+                    class="product-card"
+                    data-name="{{ product.name|lower }}"
+                    data-category="{{ product.category|lower }}"
+                >
+
+                    <!-- IMAGE -->
+
+                    <div class="product-image">
+
+                        {% if product.image %}
+
+                        <img
+                            src="{{ url_for(
+                                'uploaded_product_image',
+                                filename=product.image
+                            ) }}"
+                            alt="{{ product.name }}"
+                            loading="lazy"
+                        >
+
+                        {% else %}
+
+                        <div class="no-image">
+                            No Image
+                        </div>
+
+                        {% endif %}
+
+                    </div>
+
+
+                    <!-- PRODUCT INFO -->
+
+                    <div class="product-info">
+
+                        <div class="product-category">
+                            {{ product.category }}
+                        </div>
+
+                        <h3>
+                            {{ product.name }}
+                        </h3>
+
+
+                        {% if product.description %}
+
+                        <p class="product-description">
+                            {{ product.description }}
+                        </p>
+
+                        {% endif %}
+
+
+                        <div class="product-price">
+                            ₹{{ "%.2f"|format(product.price) }}
+                        </div>
+
+
+                        <!-- ACTIONS -->
+
+                        <div class="product-actions">
+
+                            <a
+                                href="{{ url_for(
+                                    'customer.product_details',
+                                    product_id=product.id
+                                ) }}"
+                                class="view-btn"
+                            >
+                                View
+                            </a>
+
+                            <button
+                                type="button"
+                                class="order-btn add-to-order"
+                                data-id="{{ product.id }}"
+                                data-name="{{ product.name }}"
+                                data-price="{{ product.price }}"
+                            >
+                                🛒 Add
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                {% endif %}
+
+            {% endfor %}
+
+        </div>
+
+
+        <!-- NO PRODUCTS -->
+
+        <div
+            id="noProductsMessage"
+            class="no-products-message"
+            style="display: none;"
+        >
+
+            <h3>
+                No products found
+            </h3>
+
+            <p>
+                Try another product name or category.
+            </p>
+
+        </div>
+
+    </div>
+
+</section>
+
+{% endblock %}

@@ -1,0 +1,225 @@
+{% extends "base.html" %}
+
+{% block title %}Add Product - Admin{% endblock %}
+
+{% block content %}
+
+<section class="admin-section">
+
+    <div class="container">
+
+        <div class="admin-form-card">
+
+            <div class="admin-form-header">
+
+                <div>
+                    <h1>Add Product</h1>
+                    <p>Add a new product to your store.</p>
+                </div>
+
+                <a
+                    href="{{ url_for('admin.dashboard') }}"
+                    class="view-btn"
+                >
+                    ← Back to Dashboard
+                </a>
+
+            </div>
+
+
+            <form
+                method="POST"
+                enctype="multipart/form-data"
+                class="admin-form"
+            >
+
+                <!-- PRODUCT NAME -->
+
+                <div class="form-group">
+
+                    <label for="name">
+                        Product Name *
+                    </label>
+
+                    <input
+                        type="text"
+                        id="name"
+                        name="name"
+                        placeholder="Example: Tata Salt 1kg"
+                        required
+                    >
+
+                </div>
+
+
+                <!-- PRICE -->
+
+                <div class="form-group">
+
+                    <label for="price">
+                        Price *
+                    </label>
+
+                    <input
+                        type="number"
+                        id="price"
+                        name="price"
+                        step="0.01"
+                        min="0"
+                        placeholder="Example: 25.00"
+                        required
+                    >
+
+                </div>
+
+
+                <!-- CATEGORY -->
+
+                <div class="form-group">
+
+                    <label for="category">
+                        Category *
+                    </label>
+
+                    <select
+                        id="category"
+                        name="category"
+                        required
+                    >
+
+                        <option value="">
+                            Select Category
+                        </option>
+
+                        {% for category in categories %}
+
+                        <option value="{{ category }}">
+                            {{ category }}
+                        </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                </div>
+
+
+                <!-- DESCRIPTION -->
+
+                <div class="form-group">
+
+                    <label for="description">
+                        Description
+                    </label>
+
+                    <textarea
+                        id="description"
+                        name="description"
+                        rows="4"
+                        placeholder="Enter product description..."
+                    ></textarea>
+
+                </div>
+
+
+                <!-- STOCK -->
+
+                <div class="form-group">
+
+                    <label for="stock">
+                        Stock Status *
+                    </label>
+
+                    <select
+                        id="stock"
+                        name="stock"
+                        required
+                    >
+
+                        <option value="available">
+                            Available
+                        </option>
+
+                        <option value="out">
+                            Out of Stock
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <!-- IMAGE -->
+
+                <div class="form-group">
+
+                    <label for="image">
+                        Product Image
+                    </label>
+
+                    <input
+                        type="file"
+                        id="image"
+                        name="image"
+                        accept=".png,.jpg,.jpeg,.webp"
+                    >
+
+                    <small>
+                        Supported: JPG, JPEG, PNG, WEBP
+                        — Maximum 5MB
+                    </small>
+
+                </div>
+
+
+                <!-- IMAGE PREVIEW -->
+
+                <div
+                    id="imagePreviewContainer"
+                    class="image-preview-container"
+                    style="display: none;"
+                >
+
+                    <p class="image-preview-title">
+                        Image Preview
+                    </p>
+
+                    <img
+                        id="imagePreview"
+                        src=""
+                        alt="Product Image Preview"
+                        class="image-preview"
+                    >
+
+                </div>
+
+
+                <!-- BUTTONS -->
+
+                <div class="admin-form-actions">
+
+                    <a
+                        href="{{ url_for('admin.dashboard') }}"
+                        class="cancel-btn"
+                    >
+                        Cancel
+                    </a>
+
+                    <button
+                        type="submit"
+                        class="btn"
+                    >
+                        ➕ Add Product
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</section>
+
+{% endblock %}

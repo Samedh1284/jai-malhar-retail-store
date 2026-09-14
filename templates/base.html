@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        {% block title %}Jai Malhar Retail Store{% endblock %}
+    </title>
+
+    <!-- Main CSS -->
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/style.css', v=2) }}"
+    >
+
+</head>
+
+
+<body>
+
+    <!-- =========================
+         HEADER
+         ========================= -->
+
+    <header class="site-header">
+
+        <div class="container header-container">
+
+            <a
+                href="{{ url_for('customer.index') }}"
+                class="logo-link"
+            >
+
+                <img
+                    src="{{ url_for('static', filename='images/logo.png') }}"
+                    alt="Jai Malhar Retail Store"
+                    class="site-logo"
+                >
+
+                <div class="store-name">
+
+                    <h1>Jai Malhar</h1>
+
+                    <span>
+                        Retail Store
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- Navigation -->
+
+            <nav class="main-nav">
+
+                <a href="{{ url_for('customer.index') }}">
+                    Home
+                </a>
+
+                <a href="{{ url_for('customer.index') }}#products">
+                    Products
+                </a>
+
+                <a href="{{ url_for('customer.order') }}">
+                    Order
+                    <span id="cartCount">0</span>
+                </a>
+
+            </nav>
+
+        </div>
+
+    </header>
+
+
+    <!-- =========================
+         MAIN CONTENT
+         ========================= -->
+
+    <main>
+
+        {% block content %}
+
+        {% endblock %}
+
+    </main>
+
+
+    <!-- =========================
+         FOOTER
+         ========================= -->
+
+    <footer class="site-footer">
+
+        <div class="container">
+
+            <h3>
+                Jai Malhar Retail Store
+            </h3>
+
+            <p>
+                Your local store for everyday essentials.
+            </p>
+
+            <p>
+                © 2026 Jai Malhar Retail Store
+            </p>
+
+        </div>
+
+    </footer>
+
+
+    <!-- =========================
+         JAVASCRIPT
+         ========================= -->
+
+    <script
+        src="{{ url_for('static', filename='js/script.js', v=2) }}"
+    ></script>
+
+</body>
+
+</html>

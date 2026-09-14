@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}
+{{ product.name }} - Jai Malhar Retail Store
+{% endblock %}
+
+{% block content %}
+
+<section class="product-details-section">
+
+    <div class="container">
+
+        <div class="product-details-container">
+
+            <!-- PRODUCT IMAGE -->
+
+            <div class="product-details-image">
+
+                {% if product.image %}
+
+                <img
+                    src="{{ url_for(
+                        'uploaded_product_image',
+                        filename=product.image
+                    ) }}"
+                    alt="{{ product.name }}"
+                >
+
+                {% else %}
+
+                <div class="no-image">
+                    No Image
+                </div>
+
+                {% endif %}
+
+            </div>
+
+
+            <!-- PRODUCT INFORMATION -->
+
+            <div class="product-details-info">
+
+                <div class="product-category">
+                    {{ product.category }}
+                </div>
+
+                <h1>
+                    {{ product.name }}
+                </h1>
+
+
+                <!-- PRICE -->
+
+                <div class="product-details-price">
+                    ₹{{ "%.2f"|format(product.price) }}
+                </div>
+
+
+                <!-- DESCRIPTION -->
+
+                {% if product.description %}
+
+                <div class="product-details-description">
+
+                    <h3>
+                        Description
+                    </h3>
+
+                    <p>
+                        {{ product.description }}
+                    </p>
+
+                </div>
+
+                {% endif %}
+
+
+                <!-- AVAILABILITY -->
+
+                {% if product.is_available %}
+
+                <div class="availability available">
+                    ✓ Available
+                </div>
+
+                <button
+                    type="button"
+                    class="order-btn add-to-order"
+                    data-id="{{ product.id }}"
+                    data-name="{{ product.name }}"
+                    data-price="{{ product.price }}"
+                >
+                    🛒 Add to Order
+                </button>
+
+                {% else %}
+
+                <div class="availability unavailable">
+                    ✕ Currently Unavailable
+                </div>
+
+                {% endif %}
+
+
+                <!-- BACK BUTTON -->
+
+                <div class="product-details-actions">
+
+                    <a
+                        href="{{ url_for('customer.index') }}"
+                        class="view-btn"
+                    >
+                        ← Back to Products
+                    </a>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+{% endblock %}
