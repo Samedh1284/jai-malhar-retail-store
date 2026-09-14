@@ -3,7 +3,8 @@ import os
 from flask import (
     Flask,
     send_from_directory,
-    render_template
+    render_template,
+    url_for
 )
 
 from config import Config
@@ -53,6 +54,27 @@ def create_app():
 
 
     # =========================================================
+    # PRODUCT IMAGE URL HELPER
+    # =========================================================
+
+    @app.template_global()
+    def product_image_url(image):
+
+        if not image:
+            return None
+
+        # Cloudinary / external image
+        if image.startswith("http://") or image.startswith("https://"):
+            return image
+
+        # Old locally stored image
+        return url_for(
+            "uploaded_product_image",
+            filename=image
+        )
+
+
+    # =========================================================
     # 404 ERROR PAGE
     # =========================================================
 
@@ -83,7 +105,7 @@ app = create_app()
 
 
 # =========================================================
-# SERVE PRODUCT IMAGES
+# SERVE OLD LOCAL PRODUCT IMAGES
 # =========================================================
 
 @app.route("/uploads/products/<filename>")

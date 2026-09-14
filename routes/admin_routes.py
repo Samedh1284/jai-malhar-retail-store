@@ -1,6 +1,7 @@
 from functools import wraps
-import os
-import uuid
+
+import cloudinary
+import cloudinary.uploader
 
 from flask import (
     Blueprint,
@@ -14,11 +15,14 @@ from flask import (
 )
 
 from werkzeug.security import check_password_hash
-from werkzeug.utils import secure_filename
 
 from extensions import db
 from models import Admin, Product
 
+
+# =========================================================
+# ADMIN BLUEPRINT
+# =========================================================
 
 admin_bp = Blueprint(
     "admin",
@@ -40,11 +44,101 @@ ALLOWED_IMAGE_EXTENSIONS = {
 
 
 def allowed_image(filename):
+
     return (
         "." in filename
         and filename.rsplit(".", 1)[1].lower()
         in ALLOWED_IMAGE_EXTENSIONS
     )
+
+
+# =========================================================
+# CLOUDINARY CONFIGURATION
+# =========================================================
+
+def configure_cloudinary():
+
+    cloudinary.config(
+        cloud_name=current_app.config["CLOUDINARY_CLOUD_NAME"],
+        api_key=current_app.config["CLOUDINARY_API_KEY"],
+        api_secret=current_app.config["CLOUDINARY_API_SECRET"],
+        secure=True
+    )
+
+
+# =========================================================
+# UPLOAD IMAGE TO CLOUDINARY
+# =========================================================
+
+def upload_product_image(image):
+
+    configure_cloudinary()
+
+    result = cloudinary.uploader.upload(
+        image,
+        folder="jai-malhar-store/products",
+        resource_type="image"
+    )
+
+    return result.get("secure_url")
+
+
+# =========================================================
+# DELETE IMAGE FROM CLOUDINARY
+# =========================================================
+
+def delete_product_image(image_url):
+
+    if not image_url:
+        return
+
+    try:
+
+        configure_cloudinary()
+
+        # Cloudinary URLs look similar to:
+        #
+        # https://res.cloudinary.com/cloud_name/image/upload/
+        # v1234567890/
+        # jai-malhar-store/products/filename.jpg
+        #
+        # We extract the public ID from the URL.
+
+        upload_marker = "/upload/"
+
+        if upload_marker not in image_url:
+            return
+
+        public_id_with_extension = image_url.split(
+            upload_marker,
+            1
+        )[1]
+
+        # Remove version number if present
+        parts = public_id_with_extension.split("/")
+
+        if parts and parts[0].startswith("v") and parts[0][1:].isdigit():
+            public_id_with_extension = "/".join(parts[1:])
+
+        # Remove file extension
+        public_id = public_id_with_extension.rsplit(
+            ".",
+            1
+        )[0]
+
+        cloudinary.uploader.destroy(
+            public_id,
+            resource_type="image"
+        )
+
+    except Exception as error:
+
+        # Do not stop product deletion if Cloudinary
+        # image deletion fails.
+
+        print(
+            f"Cloudinary image deletion failed: {error}"
+        )
 
 
 # =========================================================
@@ -57,6 +151,7 @@ def admin_required(route_function):
     def decorated_function(*args, **kwargs):
 
         if "admin_id" not in session:
+
             return redirect(
                 url_for("admin.login")
             )
@@ -234,7 +329,6 @@ def add_product():
                 categories=categories
             )
 
-
         # -------------------------------------------------
         # CATEGORY VALIDATION
         # -------------------------------------------------
@@ -250,7 +344,6 @@ def add_product():
                 "admin/add_product.html",
                 categories=categories
             )
-
 
         # -------------------------------------------------
         # PRICE VALIDATION
@@ -275,18 +368,18 @@ def add_product():
                 categories=categories
             )
 
-
         # -------------------------------------------------
         # IMAGE UPLOAD
         # -------------------------------------------------
 
         image = request.files.get("image")
 
-        image_filename = None
+        image_url = None
 
         if image and image.filename:
 
             # Check extension
+
             if not allowed_image(image.filename):
 
                 flash(
@@ -299,52 +392,34 @@ def add_product():
                     categories=categories
                 )
 
+            try:
 
-            # Secure original filename
-            original_filename = secure_filename(
-                image.filename
-            )
+                # Upload directly to Cloudinary
 
-
-            # Get extension
-            extension = original_filename.rsplit(
-                ".",
-                1
-            )[1].lower()
-
-
-            # Generate unique filename
-            unique_filename = (
-                f"{uuid.uuid4().hex}.{extension}"
-            )
-
-
-            # Upload folder
-            upload_folder = os.path.join(
-                current_app.root_path,
-                "uploads",
-                "products"
-            )
-
-
-            # Create folder if it doesn't exist
-            os.makedirs(
-                upload_folder,
-                exist_ok=True
-            )
-
-
-            # Save image
-            image.save(
-                os.path.join(
-                    upload_folder,
-                    unique_filename
+                image_url = upload_product_image(
+                    image
                 )
-            )
 
+                if not image_url:
+                    raise Exception(
+                        "Cloudinary did not return an image URL."
+                    )
 
-            image_filename = unique_filename
+            except Exception as error:
 
+                print(
+                    f"Cloudinary upload failed: {error}"
+                )
+
+                flash(
+                    "Image upload failed. Please try again.",
+                    "error"
+                )
+
+                return render_template(
+                    "admin/add_product.html",
+                    categories=categories
+                )
 
         # -------------------------------------------------
         # PRODUCT AVAILABILITY
@@ -353,7 +428,6 @@ def add_product():
         is_available = (
             stock == "available"
         )
-
 
         # -------------------------------------------------
         # CREATE PRODUCT
@@ -364,26 +438,22 @@ def add_product():
             price=price,
             category=category,
             description=description,
-            image=image_filename,
+            image=image_url,
             is_available=is_available
         )
-
 
         db.session.add(product)
 
         db.session.commit()
-
 
         flash(
             "Product added successfully.",
             "success"
         )
 
-
         return redirect(
             url_for("admin.dashboard")
         )
-
 
     return render_template(
         "admin/add_product.html",
@@ -442,7 +512,6 @@ def edit_product(product_id):
             "stock"
         )
 
-
         # -------------------------------------------------
         # REQUIRED FIELDS
         # -------------------------------------------------
@@ -460,7 +529,6 @@ def edit_product(product_id):
                 categories=categories
             )
 
-
         # -------------------------------------------------
         # CATEGORY VALIDATION
         # -------------------------------------------------
@@ -477,7 +545,6 @@ def edit_product(product_id):
                 product=product,
                 categories=categories
             )
-
 
         # -------------------------------------------------
         # PRICE VALIDATION
@@ -503,7 +570,6 @@ def edit_product(product_id):
                 categories=categories
             )
 
-
         # -------------------------------------------------
         # UPDATE PRODUCT INFORMATION
         # -------------------------------------------------
@@ -513,7 +579,6 @@ def edit_product(product_id):
         product.category = category
         product.description = description
 
-
         # -------------------------------------------------
         # PRODUCT AVAILABILITY
         # -------------------------------------------------
@@ -521,7 +586,6 @@ def edit_product(product_id):
         product.is_available = (
             stock == "available"
         )
-
 
         # -------------------------------------------------
         # REPLACE PRODUCT IMAGE
@@ -546,78 +610,47 @@ def edit_product(product_id):
                     categories=categories
                 )
 
+            try:
 
-            # Secure original filename
+                # Upload new image first
 
-            original_filename = secure_filename(
-                image.filename
-            )
-
-
-            # Get extension
-
-            extension = original_filename.rsplit(
-                ".",
-                1
-            )[1].lower()
-
-
-            # Generate unique filename
-
-            unique_filename = (
-                f"{uuid.uuid4().hex}.{extension}"
-            )
-
-
-            # Upload folder
-
-            upload_folder = os.path.join(
-                current_app.root_path,
-                "uploads",
-                "products"
-            )
-
-
-            # Create folder if it doesn't exist
-
-            os.makedirs(
-                upload_folder,
-                exist_ok=True
-            )
-
-
-            # Delete old image
-
-            if product.image:
-
-                old_image_path = os.path.join(
-                    upload_folder,
-                    product.image
+                new_image_url = upload_product_image(
+                    image
                 )
 
-                if os.path.exists(
-                    old_image_path
-                ):
-
-                    os.remove(
-                        old_image_path
+                if not new_image_url:
+                    raise Exception(
+                        "Cloudinary did not return an image URL."
                     )
 
+                # Delete old Cloudinary image
 
-            # Save new image
+                if product.image:
 
-            image.save(
-                os.path.join(
-                    upload_folder,
-                    unique_filename
+                    delete_product_image(
+                        product.image
+                    )
+
+                # Store new URL
+
+                product.image = new_image_url
+
+            except Exception as error:
+
+                print(
+                    f"Cloudinary image replacement failed: {error}"
                 )
-            )
 
+                flash(
+                    "Image upload failed. Please try again.",
+                    "error"
+                )
 
-            # Store new filename in database
-
-            product.image = unique_filename
-
+                return render_template(
+                    "admin/edit_product.html",
+                    product=product,
+                    categories=categories
+                )
 
         # -------------------------------------------------
         # SAVE CHANGES
@@ -625,23 +658,21 @@ def edit_product(product_id):
 
         db.session.commit()
 
-
         flash(
             "Product updated successfully.",
             "success"
         )
 
-
         return redirect(
             url_for("admin.dashboard")
         )
-
 
     return render_template(
         "admin/edit_product.html",
         product=product,
         categories=categories
     )
+
 
 # =========================================================
 # DELETE PRODUCT
@@ -659,26 +690,14 @@ def delete_product(product_id):
     )
 
     # -------------------------------------------------
-    # DELETE PRODUCT IMAGE
+    # DELETE PRODUCT IMAGE FROM CLOUDINARY
     # -------------------------------------------------
 
     if product.image:
 
-        upload_folder = os.path.join(
-            current_app.root_path,
-            "uploads",
-            "products"
-        )
-
-        image_path = os.path.join(
-            upload_folder,
+        delete_product_image(
             product.image
         )
-
-        if os.path.exists(image_path):
-
-            os.remove(image_path)
-
 
     # -------------------------------------------------
     # DELETE PRODUCT FROM DATABASE
@@ -690,7 +709,6 @@ def delete_product(product_id):
 
     db.session.commit()
 
-
     # -------------------------------------------------
     # SUCCESS MESSAGE
     # -------------------------------------------------
@@ -700,10 +718,10 @@ def delete_product(product_id):
         "success"
     )
 
-
     return redirect(
         url_for("admin.dashboard")
     )
+
 
 # =========================================================
 # TOGGLE STOCK
@@ -726,7 +744,6 @@ def toggle_stock(product_id):
 
     db.session.commit()
 
-
     if product.is_available:
 
         flash(
@@ -740,7 +757,6 @@ def toggle_stock(product_id):
             f"{product.name} is now out of stock.",
             "success"
         )
-
 
     return redirect(
         url_for("admin.dashboard")

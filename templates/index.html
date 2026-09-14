@@ -4,7 +4,9 @@
 
 {% block content %}
 
-<!-- HERO -->
+<!-- =========================================================
+     HERO
+========================================================= -->
 
 <section class="hero">
 
@@ -26,7 +28,9 @@
 </section>
 
 
-<!-- PRODUCTS -->
+<!-- =========================================================
+     PRODUCTS
+========================================================= -->
 
 <section class="products-section" id="products">
 
@@ -103,10 +107,7 @@
                         {% if product.image %}
 
                         <img
-                            src="{{ url_for(
-                                'uploaded_product_image',
-                                filename=product.image
-                            ) }}"
+                            src="{{ product_image_url(product.image) }}"
                             alt="{{ product.name }}"
                             loading="lazy"
                         >
